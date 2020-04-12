@@ -42,33 +42,32 @@ class Producer:
         # If the topic does not already exist, try to create it
         if self.topic_name not in Producer.existing_topics:
             self.create_topic()
-            Producer.existing_topics.add(self.topic_name)
-            self.producer = AvroProducer({'bootstrap.servers': self.broker_properties["bootstrap.servers"], 
+        Producer.existing_topics.add(self.topic_name)
+        self.producer = AvroProducer({'bootstrap.servers': self.broker_properties["bootstrap.servers"],
                                       'schema.registry.url': self.broker_properties["schema.registry.url"]},
-            default_key_schema=self.key_schema, default_value_schema=self.value_schema)
-
+                                     default_key_schema=self.key_schema, default_value_schema=self.value_schema)
 
 
     def create_topic(self):
         """Creates the producer topic if it does not already exist"""
-        client = AdminClient({'bootstrap.servers': self.broker_properties["bootstrap.servers"]})
+        client = AdminClient(
+            {'bootstrap.servers': self.broker_properties["bootstrap.servers"]})
         topic_list = client.list_topics()
-        
+
         if topic_list.topics.get(self.topic_name) is None:
             newTopic = NewTopic(
-                topic=self.topic_name, 
-                num_partitions=self.num_partitions, 
+                topic=self.topic_name,
+                num_partitions=self.num_partitions,
                 replication_factor=self.num_replicas,
                 config={
                     "cleanup.policy": "compaction",
-                    "compression.type": "lz4",        
+                    "compression.type": "lz4",
                     "delete.retention.ms": 1000,
                     "file.delete.delay.ms": 1000
                 }
             )
             client.create_topics([newTopic])
         logger.info("topic creation kafka integration completed")
-
 
     def time_millis(self):
         return int(round(time.time() * 1000))
